@@ -61,6 +61,22 @@ public class PostController {
         });
         return new ResponseEntity<>("Post created", HttpStatus.OK);
     }
+    @PostMapping("/like/{username}/{password}")
+    public ResponseEntity<?> likePost(@RequestBody PostDto postDto, @PathVariable String username, @PathVariable String password){
+
+        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
+                username, password));
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        userRepository.findById(userRepository.findByUsername(postDto.getOwner()).get().getId()).map(user ->
+        {
+            Post posts = postRepository.findByName(postDto.getName()).get();
+            user.getPosts_fouvorit().add(posts);
+            return  userRepository.save(user);
+        });
+        return new ResponseEntity<>("Post created", HttpStatus.OK);
+    }
     @GetMapping("/get/fromtheme/{name}/{username}/{password}")
     public List<Post> getPostsWithTheme(@PathVariable String name, @PathVariable String username, @PathVariable String password){
         System.out.println(password);
@@ -88,6 +104,16 @@ public class PostController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         return postRepository.findAll();
     }
+    @GetMapping("/like/get/{username}/{password}")
+    public List<Post> getfavouritPost(@PathVariable String username, @PathVariable String password){
+        System.out.println(password);
+        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
+                username, password));
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        User user = userRepository.findByUsername(username).get();
+        return userRepository.getFavoritePostsByUserId(user.getId());
+    }
     @GetMapping("/getown/{username}/{password}")
     public List<Post> getOwnPost(@PathVariable String username, @PathVariable String password){
         System.out.println(password);
@@ -97,5 +123,21 @@ public class PostController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         User user = userRepository.findByUsername(username).get();
         return userRepository.getUserPosts(user.getId());
+    }
+    @PostMapping("/dislike/{username}/{password}")
+    public ResponseEntity<?> dislikePost(@RequestBody PostDto postDto, @PathVariable String username, @PathVariable String password){
+
+        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
+                username, password));
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        userRepository.findById(userRepository.findByUsername(postDto.getOwner()).get().getId()).map(user ->
+        {
+            Post posts = postRepository.findByName(postDto.getName()).get();
+            user.getPosts_fouvorit().remove(posts);
+            return  userRepository.save(user);
+        });
+        return new ResponseEntity<>("Post created", HttpStatus.OK);
     }
 }
