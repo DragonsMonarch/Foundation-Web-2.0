@@ -9,6 +9,14 @@ import com.dragonslotos.Foundation20.models.User;
 import com.dragonslotos.Foundation20.repository.PostRepository;
 import com.dragonslotos.Foundation20.repository.ThemeRepository;
 import com.dragonslotos.Foundation20.repository.UserRepository;
+import com.google.gson.JsonElement;
+import com.vk.api.sdk.client.TransportClient;
+import com.vk.api.sdk.client.VkApiClient;
+import com.vk.api.sdk.client.actors.ServiceActor;
+import com.vk.api.sdk.exceptions.ApiException;
+import com.vk.api.sdk.exceptions.ClientException;
+import com.vk.api.sdk.httpclient.HttpTransportClient;
+import com.vk.api.sdk.objects.ServiceClientCredentialsFlowResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +31,8 @@ import java.util.*;
 @RestController
 @RequestMapping("/api/posts")
 public class PostController {
+    TransportClient transportClient = new HttpTransportClient();
+    VkApiClient vk = new VkApiClient(transportClient);
     @Autowired
     private PostRepository postRepository;
     @Autowired
@@ -125,12 +135,16 @@ public class PostController {
         return userRepository.getUserPosts(user.getId());
     }
     @PostMapping("/dislike/{username}/{password}")
-    public ResponseEntity<?> dislikePost(@RequestBody PostDto postDto, @PathVariable String username, @PathVariable String password){
+    public ResponseEntity<?> dislikePost(@RequestBody PostDto postDto, @PathVariable String username, @PathVariable String password) throws ClientException, ApiException {
 
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
                 username, password));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        ServiceActor actor = new ServiceActor(51669815, "ab7d922eab7d922eab7d922e2ea869f919aab7dab7d922ecffdf955009ac05f286b3a59");
+
+//        JsonElement response = vk.execute().code(actor, "");
 
         userRepository.findById(userRepository.findByUsername(postDto.getOwner()).get().getId()).map(user ->
         {
@@ -138,6 +152,7 @@ public class PostController {
             user.getPosts_fouvorit().remove(posts);
             return  userRepository.save(user);
         });
+
         return new ResponseEntity<>("Post created", HttpStatus.OK);
     }
 }
